@@ -11,3 +11,9 @@ func IsExistFile(file string) error {
 	}
 	return nil
 }
+
+// IsExistProc returns an error if there is no process with specified pid
+func IsExistProcByPid(pid int) error {
+	_, err := os.FindProcess(pid)
+	return err
+}
