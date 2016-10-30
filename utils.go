@@ -5,6 +5,12 @@ import (
 	"os"
 )
 
+type FSCount struct {
+	Files int
+	Dirs  int
+	All   int
+}
+
 // IsExistFile returns an error only if the file doesn't exist
 func IsExistFile(file string) error {
 	if _, err := os.Stat(file); err != nil {
@@ -21,19 +27,23 @@ func IsExistProcByPid(pid int) error {
 	return err
 }
 
-// CountDirs counts directories in a directory
-func CountDirs(dir string) (int, error) {
-	var count int
+// CountInDir counts the number of items in dir and returns a FSCount struct
+// with the number of dirs, files and total number of items
+func CountInDir(dir string) (FSCount, error) {
+	count := FSCount{}
 	files, err := ioutil.ReadDir(dir)
 	if err != nil {
-		return 0, err
+		return count, err
 	}
 
 	for _, file := range files {
-		// count only directories
-		if file.IsDir() {
-			count++
+		count.All += 1
+		if file.Mode().IsRegular() {
+			count.Files += 1
+		} else if file.Mode().IsDir() {
+			count.Dirs += 1
 		}
 	}
+
 	return count, nil
 }
