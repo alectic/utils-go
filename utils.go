@@ -11,17 +11,23 @@ type FSCount struct {
 	All   int
 }
 
-// IsExistFile returns an error only if the file doesn't exist
-func IsExistFile(file string) error {
-	if _, err := os.Stat(file); err != nil {
+// IsExistFile returns true only if file exists and is not a dir
+func IsExistFile(file string) bool {
+	f, err := os.Stat(file)
+	if err != nil {
 		if os.IsNotExist(err) {
-			return err
+			return false
 		}
 	}
-	return nil
+
+	if f.Mode().IsDir() {
+		return false
+	}
+
+	return true
 }
 
-// IsExistProc returns an error if there is no process with specified pid
+// IsExistProc returns an error if there is no process with pid
 func IsExistProcByPid(pid int) error {
 	_, err := os.FindProcess(pid)
 	return err
