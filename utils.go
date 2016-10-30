@@ -27,6 +27,22 @@ func IsExistFile(file string) bool {
 	return true
 }
 
+// IsExistDir return true only if dir exists and is not a file
+func IsExistDir(dir string) bool {
+	f, err := os.Stat(dir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false
+		}
+	}
+
+	if f.Mode().IsRegular() {
+		return false
+	}
+
+	return true
+}
+
 // IsExistProc returns an error if there is no process with pid
 func IsExistProcByPid(pid int) error {
 	_, err := os.FindProcess(pid)
