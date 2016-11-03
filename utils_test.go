@@ -3,7 +3,7 @@ package utils_test
 import (
 	"math/rand"
 	"os"
-	"path"
+	"path/filepath"
 	"strconv"
 	"testing"
 	"time"
@@ -31,46 +31,55 @@ func TestIsExistDir(t *testing.T) {
 	assert := assert.New(t)
 	assert.NoError(os.RemoveAll(testdir), "shoult not return an error")
 	assert.False(utils.IsExistDir(testdir), "should return false")
-	assert.NoError(os.Mkdir(testdir, 0744), "should not return an error")
+	require.NoError(t, os.Mkdir(testdir, 0744), "should not return an error")
 	defer func() {
 		assert.NoError(os.RemoveAll(testdir), "should not return an error")
 	}()
 	assert.True(utils.IsExistDir(testdir), "should return true")
 }
 
-func TestIsExistProcByPid(t *testing.T) {
+func TestIsExistProcPid(t *testing.T) {
 	pid := os.Getpid()
-	assert.NoError(t, utils.IsExistProcByPid(pid), "should not retun an error")
+	assert := assert.New(t)
+	assert.True(utils.IsExistProcPid(pid), "should return true")
+	assert.False(utils.IsExistProcPid(12345), "should return false")
 }
 
-func TestCountInDir(t *testing.T) {
+func TestIsExistProcName(t *testing.T) {
+	name := filepath.Base(os.Args[0])
+	assert := assert.New(t)
+	assert.True(utils.IsExistProcName(name), "should return true")
+	assert.False(utils.IsExistProcName("name1234567890"), "should return false")
+}
+
+func TestCountDir(t *testing.T) {
 	filename := "file_test"
 	dirname := "dir_test"
-	testdir := path.Join(os.TempDir(), "utils-go.test")
+	testdir := filepath.Join(os.TempDir(), "utils-go.test")
 
 	assert := assert.New(t)
 	require := require.New(t)
 
-	require.NoError(os.RemoveAll(testdir), "should not return an error")
+	assert.NoError(os.RemoveAll(testdir), "should not return an error")
 	require.NoError(os.Mkdir(testdir, 0744), "should not return an error")
 
-	maxItems := 20
+	maxEntries := 20
 	var files, dirs int
 	choices := map[int]func(int){
 		0: func(i int) {
-			_, err := os.Create(path.Join(testdir, filename+strconv.Itoa(i)))
+			_, err := os.Create(filepath.Join(testdir, filename+strconv.Itoa(i)))
 			require.NoError(err, "should not return an error")
 			files += 1
 		},
 		1: func(i int) {
-			err := os.Mkdir(path.Join(testdir, dirname+strconv.Itoa(i)), 0744)
+			err := os.Mkdir(filepath.Join(testdir, dirname+strconv.Itoa(i)), 0744)
 			require.NoError(err, "should not return an error")
 			dirs += 1
 		},
 	}
 
 	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
-	for i := 1; i < maxItems+1; i++ {
+	for i := 1; i < maxEntries+1; i++ {
 		choices[rng.Intn(2)](i)
 	}
 
@@ -78,9 +87,9 @@ func TestCountInDir(t *testing.T) {
 		assert.NoError(os.RemoveAll(testdir), "shout not return an error")
 	}()
 
-	count, err := utils.CountInDir(testdir)
+	count, err := utils.CountDir(testdir)
 	require.NoError(err, "should not return an error")
 	assert.Equal(files, count.Files, "they should be equal")
 	assert.Equal(dirs, count.Dirs, "they should be equal")
-	assert.Equal(maxItems, count.All, "they should be equal")
+	assert.Equal(maxEntries, count.All, "they should be equal")
 }

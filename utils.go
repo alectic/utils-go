@@ -3,6 +3,10 @@ package utils
 import (
 	"io/ioutil"
 	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
+	"syscall"
 )
 
 type FSCount struct {
@@ -43,15 +47,52 @@ func IsExistDir(dir string) bool {
 	return true
 }
 
-// IsExistProc returns an error if there is no process with pid
-func IsExistProcByPid(pid int) error {
-	_, err := os.FindProcess(pid)
-	return err
+// IsExistProcPid returns false if there is no process with pid
+// otherwise returns true if the process exist
+func IsExistProcPid(pid int) bool {
+	p, err := os.FindProcess(pid)
+	if err != nil {
+		return false
+	}
+
+	if err := p.Signal(syscall.Signal(0)); err != nil {
+		return false
+	}
+
+	return true
+}
+
+// IsExistProcName return false if there is no process with name
+// otherwise returns true if the process exists
+func IsExistProcName(name string) bool {
+	procPath := "/proc"
+	var ok bool
+	entries, _ := ioutil.ReadDir(procPath)
+
+	for _, entry := range entries {
+		if !entry.Mode().IsDir() {
+			continue
+		}
+
+		// if dir's name is not made of digits
+		if _, err := strconv.Atoi(entry.Name()); err != nil {
+			continue
+		}
+
+		b, _ := ioutil.ReadFile(filepath.Join(procPath, entry.Name(), "comm"))
+
+		if strings.Contains(string(b), name) {
+			ok = true // process exists
+			break
+		}
+	}
+
+	return ok
 }
 
 // CountInDir counts the number of items in dir and returns a FSCount struct
-// with the number of dirs, files and total number of items
-func CountInDir(dir string) (FSCount, error) {
+// with the number of dirs, files and total number of entries
+func CountDir(dir string) (FSCount, error) {
 	count := FSCount{}
 	files, err := ioutil.ReadDir(dir)
 	if err != nil {
