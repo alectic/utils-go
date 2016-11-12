@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	utils "github.com/alectic/utils-go"
+	utils "github.com/alexdreptu/utils-go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
