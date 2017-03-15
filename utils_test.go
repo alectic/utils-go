@@ -69,12 +69,12 @@ func TestCountDir(t *testing.T) {
 		0: func(i int) {
 			_, err := os.Create(filepath.Join(testdir, filename+strconv.Itoa(i)))
 			require.NoError(err, "should not return an error")
-			files += 1
+			files++
 		},
 		1: func(i int) {
 			err := os.Mkdir(filepath.Join(testdir, dirname+strconv.Itoa(i)), 0744)
 			require.NoError(err, "should not return an error")
-			dirs += 1
+			dirs++
 		},
 	}
 
@@ -92,4 +92,35 @@ func TestCountDir(t *testing.T) {
 	assert.Equal(files, count.Files, "they should be equal")
 	assert.Equal(dirs, count.Dirs, "they should be equal")
 	assert.Equal(maxEntries, count.All, "they should be equal")
+}
+
+func TestZip(t *testing.T) {
+	assert := assert.New(t)
+	s1 := []string{"eins", "zwei", "drei", "vier", "fünf"}
+	s2 := []string{"uno", "due", "tre", "quattro", "cinque"}
+	m := map[string]string{
+		"eins": "uno",
+		"zwei": "due",
+		"drei": "tre",
+		"vier": "quattro",
+		"fünf": "cinque",
+	}
+	res, err := utils.Zip(s1, s2)
+	assert.NoError(err, "should not return an error")
+	assert.Equal(res, m, "should be equal")
+
+	s1 = []string{"one", "two", "three"}
+	s2 = []string{"three", "two"}
+	_, err = utils.Zip(s1, s2)
+	assert.Error(err, "should return an error")
+
+	s1 = []string{}
+	s2 = []string{}
+	_, err = utils.Zip(s1, s2)
+	assert.Error(err, "should return an error")
+
+	s1 = []string{"one"}
+	s2 = []string{}
+	_, err = utils.Zip(s1, s2)
+	assert.Error(err, "should return an error")
 }

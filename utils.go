@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"errors"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -9,6 +10,16 @@ import (
 	"syscall"
 )
 
+var (
+	// ErrSliceMismatch is returned when slices are of different lengths
+	ErrSliceMismatch = errors.New("slices are not the same length")
+	// ErrSlicesEmpty is returned when slices are empty
+	ErrSlicesEmpty = errors.New("slices are empty")
+	// ErrSliceEmpty is returned when a slice is empty
+	ErrSliceEmpty = errors.New("slice is empty")
+)
+
+// FSCount holds the count of Files Directories and Their Total
 type FSCount struct {
 	Files int
 	Dirs  int
@@ -90,7 +101,7 @@ func IsExistProcName(name string) bool {
 	return ok
 }
 
-// CountInDir counts the number of items in dir and returns a FSCount struct
+// CountDir counts the number of items in dir and returns a FSCount struct
 // with the number of dirs, files and total number of entries
 func CountDir(dir string) (FSCount, error) {
 	count := FSCount{}
@@ -100,13 +111,38 @@ func CountDir(dir string) (FSCount, error) {
 	}
 
 	for _, file := range files {
-		count.All += 1
+		count.All++
 		if file.Mode().IsRegular() {
-			count.Files += 1
+			count.Files++
 		} else if file.Mode().IsDir() {
-			count.Dirs += 1
+			count.Dirs++
 		}
 	}
 
 	return count, nil
+}
+
+// Zip takes two slices of the same length, compares their length
+// and returns an error if one of them or both are empty
+// or if they mismatch otherwise returns a map
+func Zip(s1, s2 []string) (map[string]string, error) {
+	if len(s1) == 0 && len(s2) == 0 {
+		return nil, ErrSlicesEmpty
+	}
+
+	if len(s1) == 0 || len(s2) == 0 {
+		return nil, ErrSliceEmpty
+	}
+
+	if len(s1) != len(s2) {
+		return nil, ErrSliceMismatch
+	}
+
+	m := make(map[string]string)
+
+	for i := 0; i < len(s1); i++ {
+		m[s1[i]] = s2[i]
+	}
+
+	return m, nil
 }
